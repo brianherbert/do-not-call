@@ -3,7 +3,7 @@
 import { loadConfig, firstRunSetup } from '../src/config.js';
 import { promptComplaint } from '../src/prompt.js';
 import { submitComplaint } from '../src/submitter.js';
-import { showResult } from '../src/confirm.js';
+import { showResult, renderScreenshot } from '../src/confirm.js';
 import { appendHistory, showHistory } from '../src/history.js';
 
 const args = process.argv.slice(2);
@@ -26,6 +26,7 @@ const config = await loadConfig();
 const complaint = await promptComplaint(config, phoneArg);
 const result = await submitComplaint(complaint, { dryRun, headed });
 showResult(result);
+await renderScreenshot(result.screenshotPath).catch(() => {});
 
 await appendHistory({
   success: result.success,
