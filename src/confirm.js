@@ -4,8 +4,31 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+async function findBin(name) {
+  for (const p of [`/opt/homebrew/bin/${name}`, `/usr/local/bin/${name}`, name]) {
+    try {
+      await execFileAsync(p, ['--version']);
+      return p;
+    } catch {}
+  }
+  return null;
+}
+
+async function renderKitty(shotPath) {
+  const data = await readFile(shotPath);
+  const b64 = data.toString('base64');
+  const CHUNK = 4096;
+  for (let i = 0; i < b64.length; i += CHUNK) {
+    const chunk = b64.slice(i, i + CHUNK);
+    const more = i + CHUNK < b64.length ? 1 : 0;
+    const header = i === 0 ? `a=T,f=100,m=${more}` : `m=${more}`;
+    process.stdout.write(`\x1b_G${header};${chunk}\x1b\\`);
+  }
+  process.stdout.write('\n');
+}
+
 export async function renderScreenshot(shotPath) {
-  // iTerm2 inline image protocol — renders the actual PNG inline
+  // iTerm2 inline image protocol
   if (process.env.TERM_PROGRAM === 'iTerm.app') {
     try {
       const data = await readFile(shotPath);
@@ -15,13 +38,24 @@ export async function renderScreenshot(shotPath) {
     } catch {}
   }
 
-  // chafa — high-quality Unicode/ASCII art, works in most terminals
-  try {
-    const cols = process.stdout.columns || 120;
-    const { stdout } = await execFileAsync('chafa', [`--size=${cols}x40`, shotPath]);
-    process.stdout.write(stdout);
-    return;
-  } catch {}
+  // Kitty graphics protocol — supported by Ghostty and Kitty terminal
+  if (process.env.TERM_PROGRAM === 'ghostty' || process.env.TERM === 'xterm-kitty') {
+    try {
+      await renderKitty(shotPath);
+      return;
+    } catch {}
+  }
+
+  // chafa — Unicode/ASCII art fallback; look up full path since brew isn't always in PATH
+  const chafa = await findBin('chafa');
+  if (chafa) {
+    try {
+      const cols = process.stdout.columns || 120;
+      const { stdout } = await execFileAsync(chafa, [`--size=${cols}x40`, shotPath]);
+      process.stdout.write(stdout);
+      return;
+    } catch {}
+  }
 
   console.log('(Install chafa via `brew install chafa` to preview screenshots in terminal)');
 }
