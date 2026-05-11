@@ -126,22 +126,27 @@ export async function submitComplaint(complaint, { dryRun = false, headed = fals
     // means the server has finished responding and the final page is rendered.
     await page.waitForLoadState('networkidle', { timeout: 30000 });
 
-    // Parse confirmation
-    const confirmationText = await page.locator('h1, h2, .confirmation-message, [class*="success"]')
+    // If the submit button is gone we successfully left step 2 — that's the
+    // most reliable signal. Text matching is a best-effort bonus.
+    const formGone = await page.locator('#StepTwoSubmitButton').count().then(n => n === 0);
+
+    const confirmationText = await page.locator('h1, h2, h3, p')
       .first()
-      .textContent({ timeout: 10000 })
-      .catch(() => 'Complaint submitted.');
+      .textContent({ timeout: 5000 })
+      .catch(() => '');
 
     await page.screenshot({ path: shotPath, fullPage: true });
     await browser.close();
 
-    const success = /thank you|received|confirmation|complaint.*filed|submitted/i.test(confirmationText ?? '');
+    const success = formGone ||
+      /thank you|received|confirm|complaint|filed|submitted|report/i.test(confirmationText ?? '');
 
     return {
       success,
-      confirmationText: confirmationText?.trim() ?? '',
+      confirmationText: confirmationText?.trim() || 'Complaint submitted.',
       screenshotPath: shotPath,
       timestamp,
+      ...(!success && { error: 'Could not confirm submission — check the screenshot to verify' }),
     };
 
   } catch (err) {

@@ -75,7 +75,7 @@ export function showResult(result) {
     console.log('║  ❌  SUBMISSION FAILED                   ║');
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    console.log('Reason:      ' + result.error);
+    console.log('Reason:      ' + (result.error ?? 'Unknown — check the screenshot'));
     console.log('Screenshot:  ' + result.screenshotPath);
     console.log('');
     console.log('→ You can file manually at: https://donotcall.gov');
