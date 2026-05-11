@@ -120,7 +120,11 @@ export async function submitComplaint(complaint, { dryRun = false, headed = fals
 
     // Submit
     await page.locator('#StepTwoSubmitButton').click();
-    await page.waitForLoadState('domcontentloaded', { timeout: 20000 });
+
+    // Wait for the loading screen to clear and the confirmation content to appear.
+    // 'networkidle' waits until there are no in-flight requests for 500ms, which
+    // means the server has finished responding and the final page is rendered.
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Parse confirmation
     const confirmationText = await page.locator('h1, h2, .confirmation-message, [class*="success"]')
