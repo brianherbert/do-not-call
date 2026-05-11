@@ -2,6 +2,39 @@
 import { input, select } from '@inquirer/prompts';
 import { CALL_TOPICS } from './constants.js';
 
+export function parseDate(raw) {
+  let s = raw.trim();
+
+  // Strip ordinal suffixes: "1st" "2nd" "3rd" "4th"
+  s = s.replace(/(\d)(st|nd|rd|th)\b/gi, '$1');
+
+  // ISO format YYYY-MM-DD → rewrite as MM/DD/YYYY so Date() treats it as local time
+  s = s.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$2/$3/$1');
+
+  // Numeric with dashes or dots: 5-1-2026 or 5.1.2026 → 5/1/2026
+  s = s.replace(/^(\d{1,2})[.\-](\d{1,2})[.\-](\d{4})$/, '$1/$2/$3');
+
+  // 2-digit year: 5/1/26 or 5-1-26 → 5/1/2026
+  s = s.replace(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2})$/, (_, m, d, y) => `${m}/${d}/20${y}`);
+
+  // Month name without year: "May 1" → "May 1, <current year>"
+  if (/^[a-z]+ \d{1,2}$/i.test(s)) {
+    s = `${s}, ${new Date().getFullYear()}`;
+  }
+
+  const d = new Date(s);
+  if (isNaN(d)) return null;
+
+  const year = d.getFullYear();
+  if (year < 2000 || year > 2099) return null;
+
+  return [
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+    year,
+  ].join('/');
+}
+
 export function normalizePhone(raw) {
   return raw.replace(/\D/g, '');
 }
@@ -43,11 +76,14 @@ function displaySummary(complaint) {
 async function editFields(complaint) {
   const updated = {
     ...complaint,
-    callDate: await input({
-      message: 'Date of call (MM/DD/YYYY):',
-      default: complaint.callDate,
-      validate: v => /^\d{2}\/\d{2}\/\d{4}$/.test(v) || 'Use MM/DD/YYYY format (e.g. 05/11/2026)',
-    }),
+    callDate: await (async () => {
+      const raw = await input({
+        message: 'Date of call:',
+        default: complaint.callDate,
+        validate: v => parseDate(v) !== null || 'Could not parse — try "May 1, 2026", "5/1/26", or "05/01/2026"',
+      });
+      return parseDate(raw);
+    })(),
     callTime: await input({
       message: 'Time of call (HH:MM, 24h):',
       default: complaint.callTime,
