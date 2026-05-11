@@ -1,0 +1,19 @@
+{
+  "name": "dnc-filer",
+  "version": "1.0.0",
+  "description": "CLI to file FTC Do Not Call complaints",
+  "type": "module",
+  "bin": {
+    "dnc": "./bin/dnc.js"
+  },
+  "scripts": {
+    "setup": "playwright install chromium",
+    "start": "node bin/dnc.js",
+    "inspect": "node scripts/inspect.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "playwright": "^1.45.0"
+  }
+}
