@@ -30,7 +30,7 @@ function displaySummary(complaint) {
   console.log(`  Caller phone:  ${complaint.callerPhone}`);
   console.log(`  Call date:     ${complaint.callDate} at ${complaint.callTime}`);
   console.log(`  Call type:     ${complaint.callType}`);
-  console.log(`  Call topic:    ${complaint.callTopic}`);
+  console.log(`  Call topic:    ${complaint.callTopic}${complaint.callTopic === 'Other' ? ` — ${complaint.callTopicOther}` : ''}`);
   console.log(`  Your phone:    ${complaint.myPhone}`);
   console.log(`  Your name:     ${complaint.firstName} ${complaint.lastName}`);
   console.log(`  Email:         ${complaint.email}`);
@@ -41,7 +41,7 @@ function displaySummary(complaint) {
 }
 
 async function editFields(complaint) {
-  return {
+  const updated = {
     ...complaint,
     myPhone: normalizePhone(await input({ message: 'Your phone:', default: complaint.myPhone })),
     firstName: await input({ message: 'First name:', default: complaint.firstName }),
@@ -64,8 +64,18 @@ async function editFields(complaint) {
       choices: CALL_TOPICS.map(t => ({ name: t, value: t })),
       default: complaint.callTopic,
     }),
-    comment: await input({ message: 'Comment:', default: complaint.comment }),
   };
+  if (updated.callTopic === 'Other') {
+    updated.callTopicOther = await input({
+      message: 'Describe what the call was about:',
+      default: complaint.callTopicOther ?? '',
+      validate: v => v.trim().length > 0 || 'Please enter a description',
+    });
+  } else {
+    updated.callTopicOther = '';
+  }
+  updated.comment = await input({ message: 'Comment:', default: complaint.comment });
+  return updated;
 }
 
 export async function promptComplaint(config, phoneArg) {
@@ -80,6 +90,14 @@ export async function promptComplaint(config, phoneArg) {
   }
 
   const now = new Date();
+  let callTopicOther = '';
+  if (config.callTopic === 'Other') {
+    callTopicOther = await input({
+      message: 'Describe what the call was about:',
+      validate: v => v.trim().length > 0 || 'Please enter a description',
+    });
+  }
+
   let complaint = {
     callerPhone,
     callDate: formatDate(now),
@@ -94,6 +112,7 @@ export async function promptComplaint(config, phoneArg) {
     zip: config.zip,
     callType: config.callType,
     callTopic: config.callTopic,
+    callTopicOther,
     comment: config.comment,
     registeredOnDNC: config.registeredOnDNC,
   };

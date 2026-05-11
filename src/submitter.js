@@ -17,6 +17,7 @@ DISCOVERED SELECTORS (verified 2026-05-11):
     Robocall no:        #PrerecordMessageNORadioButton
     Phone call radio:   #PhoneCallRadioButton  (always select)
     Subject:            #ddlSubjectMatter  (select by exact option text)
+    Subject other:      #txtSubjectMatter  (visible only when "Other" selected)
     Continue:           #StepOneContinueButton
 
   Step 2 (#step2):
@@ -78,6 +79,12 @@ export async function submitComplaint(complaint, { dryRun = false, headed = fals
 
     // Subject/topic — select by exact option label text
     await page.locator('#ddlSubjectMatter').selectOption({ label: complaint.callTopic });
+
+    // "Other" reveals a free-text description field
+    if (complaint.callTopic === 'Other' && complaint.callTopicOther) {
+      await page.locator('#txtSubjectMatter').waitFor({ state: 'visible', timeout: 5000 });
+      await page.locator('#txtSubjectMatter').fill(complaint.callTopicOther);
+    }
 
     // Click Continue to Step 2
     await page.locator('#StepOneContinueButton').click();
