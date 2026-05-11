@@ -43,6 +43,16 @@ function displaySummary(complaint) {
 async function editFields(complaint) {
   const updated = {
     ...complaint,
+    callDate: await input({
+      message: 'Date of call (MM/DD/YYYY):',
+      default: complaint.callDate,
+      validate: v => /^\d{2}\/\d{2}\/\d{4}$/.test(v) || 'Use MM/DD/YYYY format (e.g. 05/11/2026)',
+    }),
+    callTime: await input({
+      message: 'Time of call (HH:MM, 24h):',
+      default: complaint.callTime,
+      validate: v => /^([01]\d|2[0-3]):[0-5]\d$/.test(v) || 'Use HH:MM 24h format (e.g. 14:32)',
+    }),
     myPhone: normalizePhone(await input({ message: 'Your phone:', default: complaint.myPhone })),
     firstName: await input({ message: 'First name:', default: complaint.firstName }),
     lastName: await input({ message: 'Last name:', default: complaint.lastName }),
