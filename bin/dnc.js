@@ -96,3 +96,11 @@ await appendHistory({
   error: result.error ?? null,
   ...complaint,
 }).catch(() => {}); // history failure must never crash the main flow
+
+if (result.success) {
+  await appendReport(
+    { success: result.success, timestamp: result.timestamp, screenshotPath: result.screenshotPath, error: result.error ?? null, ...complaint },
+    config,
+  ).catch(() => {});
+  console.log('Report updated: ' + getReportPath(config).replace(homedir(), '~'));
+}
