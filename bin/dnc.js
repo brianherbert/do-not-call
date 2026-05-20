@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/Users/brianherbert/.nvm/versions/node/v18.17.1/bin/node
 // bin/dnc.js
 import { emitKeypressEvents } from 'node:readline';
 import { loadConfig, firstRunSetup } from '../src/config.js';
@@ -27,6 +27,24 @@ function cancelled(err) {
 }
 
 const args = process.argv.slice(2);
+
+if (args.includes('--help')) {
+  console.log(`
+Usage: dnc [phone] [options]
+
+  dnc 8005551234        File a complaint for the given number
+  dnc                   Prompt for the caller number interactively
+
+Options:
+  --config              Edit your saved personal details and preferences
+  --history             Show the last 20 complaint attempts (all outcomes)
+  --generate-report     Rebuild do-not-call-reports.md from history
+  --dry-run             Fill the form but stop before submitting
+  --headed              Open a visible browser window (for debugging)
+  --help                Show this help message
+`);
+  process.exit(0);
+}
 
 if (args.includes('--config')) {
   await firstRunSetup().catch(cancelled);
