@@ -17,12 +17,15 @@ export async function checkDuplicate(callerPhone) {
 }
 
 function formatPhone(digits) {
+  if (!digits || digits.length < 10) return digits ?? '—';
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
 function toISODate(mmddyyyy) {
   if (!mmddyyyy) return null;
-  const [m, d, y] = mmddyyyy.split('/');
+  const parts = mmddyyyy.split('/');
+  if (parts.length !== 3) return null;
+  const [m, d, y] = parts;
   return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
