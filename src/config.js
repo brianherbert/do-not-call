@@ -56,6 +56,10 @@ export async function firstRunSetup() {
       message: 'Is your number registered on the Do Not Call list?',
       default: true,
     }),
+    reportDir: await input({
+      message: 'Directory for do-not-call-reports.md:',
+      default: join(homedir(), '.config', 'dnc'),
+    }),
   };
 
   await saveConfig(config);
