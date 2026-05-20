@@ -89,18 +89,19 @@ const result = await submitComplaint(complaint, { dryRun, headed });
 showResult(result);
 await renderScreenshot(result.screenshotPath).catch(() => {});
 
-await appendHistory({
+const historyRecord = {
   success: result.success,
   timestamp: result.timestamp,
   screenshotPath: result.screenshotPath,
   error: result.error ?? null,
   ...complaint,
-}).catch(() => {}); // history failure must never crash the main flow
+};
+
+await appendHistory(historyRecord).catch(() => {}); // history failure must never crash the main flow
 
 if (result.success) {
-  await appendReport(
-    { success: result.success, timestamp: result.timestamp, screenshotPath: result.screenshotPath, error: result.error ?? null, ...complaint },
-    config,
-  ).catch(() => {});
-  console.log('Report updated: ' + getReportPath(config).replace(homedir(), '~'));
+  await appendReport(historyRecord, config).then(
+    () => console.log('Report updated: ' + getReportPath(config).replace(homedir(), '~')),
+    () => {},
+  );
 }
