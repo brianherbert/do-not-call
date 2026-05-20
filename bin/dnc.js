@@ -68,8 +68,8 @@ await renderScreenshot(result.screenshotPath).catch(() => {});
 
 await appendHistory({
   success: result.success,
-  callerPhone: complaint.callerPhone,
   timestamp: result.timestamp,
   screenshotPath: result.screenshotPath,
   error: result.error ?? null,
+  ...complaint,
 }).catch(() => {}); // history failure must never crash the main flow
