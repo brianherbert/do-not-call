@@ -2,6 +2,7 @@
 // bin/dnc.js
 import { emitKeypressEvents } from 'node:readline';
 import { homedir } from 'node:os';
+import { confirm } from '@inquirer/prompts';
 import { loadConfig, firstRunSetup } from '../src/config.js';
 import { promptComplaint } from '../src/prompt.js';
 import { submitComplaint } from '../src/submitter.js';
@@ -71,6 +72,19 @@ const phoneArg = args.find(a => !a.startsWith('--'));
 
 const config = await loadConfig().catch(cancelled);
 const complaint = await promptComplaint(config, phoneArg).catch(cancelled);
+
+const prior = await checkDuplicate(complaint.callerPhone).catch(() => null);
+if (prior) {
+  const priorDate = new Date(prior.timestamp).toLocaleDateString();
+  const formatted = `(${complaint.callerPhone.slice(0, 3)}) ${complaint.callerPhone.slice(3, 6)}-${complaint.callerPhone.slice(6)}`;
+  console.log(`\n⚠️  You've already filed a complaint against ${formatted} on ${priorDate}.`);
+  const proceed = await confirm({ message: 'File again anyway?', default: false }).catch(cancelled);
+  if (!proceed) {
+    console.log('Cancelled. No complaint was filed.');
+    process.exit(0);
+  }
+}
+
 const result = await submitComplaint(complaint, { dryRun, headed });
 showResult(result);
 await renderScreenshot(result.screenshotPath).catch(() => {});
