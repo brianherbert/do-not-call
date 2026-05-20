@@ -1,11 +1,13 @@
 #!/Users/brianherbert/.nvm/versions/node/v18.17.1/bin/node
 // bin/dnc.js
 import { emitKeypressEvents } from 'node:readline';
+import { homedir } from 'node:os';
 import { loadConfig, firstRunSetup } from '../src/config.js';
 import { promptComplaint } from '../src/prompt.js';
 import { submitComplaint } from '../src/submitter.js';
 import { showResult, renderScreenshot } from '../src/confirm.js';
 import { appendHistory, showHistory } from '../src/history.js';
+import { checkDuplicate, appendReport, generateReport, getReportPath } from '../src/report.js';
 
 // Escape key exits cleanly from any prompt
 emitKeypressEvents(process.stdin);
@@ -53,6 +55,13 @@ if (args.includes('--config')) {
 
 if (args.includes('--history')) {
   await showHistory();
+  process.exit(0);
+}
+
+if (args.includes('--generate-report')) {
+  const config = await loadConfig().catch(cancelled);
+  const { path, count } = await generateReport(config);
+  console.log(`✅ Report written to ${path.replace(homedir(), '~')} (${count} ${count === 1 ? 'entry' : 'entries'})`);
   process.exit(0);
 }
 
